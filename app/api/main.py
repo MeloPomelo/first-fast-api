@@ -15,4 +15,4 @@ app.include_router(fuel_prices.router)
 
 @app.get("/")
 async def root():
-    return {"message": "Hello Bigger Applications!"}
+    return {"message": "Hello there"}
