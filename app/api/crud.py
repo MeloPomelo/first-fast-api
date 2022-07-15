@@ -1,10 +1,10 @@
-from sqlalchemy.orm import Session
 from datetime import date
-import requests
-from re import sub
 from decimal import Decimal
-from bs4 import BeautifulSoup
+from re import sub
 
+import requests
+from bs4 import BeautifulSoup
+from sqlalchemy.orm import Session
 
 import models
 import schemas
