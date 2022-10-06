@@ -1,11 +1,11 @@
 from fastapi import FastAPI
 
-import oil_prices
-import fuel_prices
-import models
-from database import engine
+from api import oil_prices
+from api import fuel_prices
+from app.models.database import Base
+from app.models.database import engine
 
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
 

@@ -6,25 +6,28 @@ import requests
 from bs4 import BeautifulSoup
 from sqlalchemy.orm import Session
 
-import models
-import schemas
-from constants import *
+# from . import models
+from app.models import oil_price_model
+from app.models import fuel_price_model
+from app.schemas import schemas
+from app.constants import *
 
 
 def get_oil_price(db: Session, oil_price_id: int):
-    return db.query(models.OilPrice).filter(models.OilPrice.id == oil_price_id).first()
+    # return db.query(models.OilPrice).filter(models.OilPrice.id == oil_price_id).first()
+    return db.query(oil_price_model.OilPrice).filter(oil_price_model.OilPrice.id == oil_price_id).first()
 
 
 def get_oil_price_by_date(db: Session, date: date):
-    return db.query(models.OilPrice).filter(models.OilPrice.date == date).first()
+    return db.query(oil_price_model.OilPrice).filter(oil_price_model.OilPrice.date == date).first()
 
 
 def get_oil_prices(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.OilPrice).offset(skip).limit(limit).all()
+    return db.query(oil_price_model.OilPrice).offset(skip).limit(limit).all()
 
 
 def create_oil_price(db: Session, oil_price: schemas.OilCreate):
-    db_oil_price = models.OilPrice(
+    db_oil_price = oil_price_model.OilPrice(
         title=oil_price.title,
         price=oil_price.price,
         date=oil_price.date,
@@ -39,11 +42,12 @@ def parse_oil_price(db: Session):
     page = requests.get(url=OIL_URL, headers=headers)
     soup = BeautifulSoup(page.content, "lxml")
 
-    title = soup.find('h1', attrs={'class': 'text-2xl font-semibold instrument-header_title__GTWDv mobile:mb-2'}).get_text()
+    title = soup.find('h1', attrs={'class': 'text-2xl font-semibold instrument-header_title__GTWDv mobile:mb-2'})\
+        .get_text()
     price = soup.find('span', attrs={'class': 'text-2xl'}).get_text().replace(",", ".")
     price_float = float(Decimal(sub(r"[^\d\-.]", "", price)))
 
-    db_oil_price = models.OilPrice(
+    db_oil_price = oil_price_model.OilPrice(
         title=title,
         price=price_float,
         date=date.today(),
@@ -56,7 +60,7 @@ def parse_oil_price(db: Session):
 
 
 def update_oil_price(db: Session, oil_price_id: int, oil_price: schemas.OilUpdate):
-    new_oil_price = db.query(models.OilPrice).filter(models.OilPrice.id == oil_price_id).first()
+    new_oil_price = db.query(oil_price_model.OilPrice).filter(oil_price_model.OilPrice.id == oil_price_id).first()
     new_oil_price.title = oil_price.title
     new_oil_price.price = oil_price.price
     db.add(new_oil_price)
@@ -66,23 +70,23 @@ def update_oil_price(db: Session, oil_price_id: int, oil_price: schemas.OilUpdat
 
 
 def delete_oil_price(db: Session, oil_price_id: int):
-    db.query(models.OilPrice).filter(models.OilPrice.id == oil_price_id).delete()
-    db.query(models.FuelPrice).filter(models.FuelPrice.oil_price_id == oil_price_id).delete()
+    db.query(oil_price_model.OilPrice).filter(oil_price_model.OilPrice.id == oil_price_id).delete()
+    db.query(fuel_price_model.FuelPrice).filter(fuel_price_model.FuelPrice.oil_price_id == oil_price_id).delete()
     db.commit()
     return
 
 
 def get_fuel_price(db: Session, fuel_price_id: int):
-    return db.query(models.FuelPrice).filter(models.FuelPrice.id == fuel_price_id).first()
+    return db.query(fuel_price_model.FuelPrice).filter(fuel_price_model.FuelPrice.id == fuel_price_id).first()
 
 
 def get_fuel_prices(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(models.FuelPrice).offset(skip).limit(limit).all()
+    return db.query(fuel_price_model.FuelPrice).offset(skip).limit(limit).all()
 
 
 def create_fuel_price(db: Session, fuel_price: schemas.FuelCreate, oil_price_id: int):
-    oil_price = db.query(models.OilPrice).filter(models.OilPrice.id == oil_price_id).first()
-    db_fuel_price = models.FuelPrice(
+    oil_price = db.query(oil_price_model.OilPrice).filter(oil_price_model.OilPrice.id == oil_price_id).first()
+    db_fuel_price = fuel_price_model.FuelPrice(
         title=fuel_price.title,
         price=fuel_price.price,
         date=oil_price.date,
@@ -95,7 +99,7 @@ def create_fuel_price(db: Session, fuel_price: schemas.FuelCreate, oil_price_id:
 
 
 def parse_fuel_prices(db: Session, oil_price_id: int):
-    oil_price = db.query(models.OilPrice).filter(models.OilPrice.id == oil_price_id).first()
+    oil_price = db.query(oil_price_model.OilPrice).filter(oil_price_model.OilPrice.id == oil_price_id).first()
 
     page = requests.get(url=FUEL_URL, headers=headers)
     soup = BeautifulSoup(page.content, "lxml")
@@ -109,7 +113,7 @@ def parse_fuel_prices(db: Session, oil_price_id: int):
         price = data[1].get_text().replace(",", ".")
         price_float = float(Decimal(sub(r"[^\d\-.]", "", price)))
 
-        db_fuel_price = models.FuelPrice(
+        db_fuel_price = fuel_price_model.FuelPrice(
             title=title,
             price=price_float,
             date=oil_price.date,
@@ -123,7 +127,7 @@ def parse_fuel_prices(db: Session, oil_price_id: int):
 
 
 def update_fuel_price(db: Session, fuel_price_id: int, fuel_price: schemas.FuelCreate):
-    new_fuel_price = db.query(models.FuelPrice).filter(models.FuelPrice.id == fuel_price_id).first()
+    new_fuel_price = db.query(fuel_price_model.FuelPrice).filter(fuel_price_model.FuelPrice.id == fuel_price_id).first()
     new_fuel_price.title = fuel_price.title
     new_fuel_price.price = fuel_price.price
     db.add(new_fuel_price)
@@ -133,7 +137,7 @@ def update_fuel_price(db: Session, fuel_price_id: int, fuel_price: schemas.FuelC
 
 
 def delete_fuel_price(db: Session, fuel_price_id: int):
-    db.query(models.FuelPrice).filter(models.FuelPrice.id == fuel_price_id).delete()
+    db.query(fuel_price_model.FuelPrice).filter(fuel_price_model.FuelPrice.id == fuel_price_id).delete()
     db.commit()
     return
 
